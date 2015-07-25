@@ -11,14 +11,20 @@ namespace Treeees
     {
         static void Main(string[] args)
         {
-            var compiled = GetPropTester<DataClass>("name", "steve");
+            //var lambda = GetPropTester<DataClass>("name", "steve");
+            var tester = new PropTester<DataClass>();
+
+            tester.Push("name", "steve", comparison.Equals)
+                   .Push("name", "jeff", comparison.Equals)
+                    .Or();
+            var lambda = tester.Build();
 
             List<DataClass> objs = MakeSomeDataObjs();
 
             foreach (var item in objs)
             {
                 var itemstr = item.ToString();
-                if(compiled(item))
+                if(lambda(item))
                     Console.WriteLine(string.Format("{0} matches", itemstr));
                 else
                     Console.WriteLine(string.Format("{0} doesn't matches", itemstr));
@@ -40,7 +46,7 @@ namespace Treeees
 
         private static List<DataClass> MakeSomeDataObjs()
         {
-            var names = new[] { "jimbo", "steve", "jeff" };
+            var names = new[] { "jimbo", "steve", "jeff", "george" };
             var output = new List<DataClass>();
 
             for (int i = 0; i < names.Length; i++ )
