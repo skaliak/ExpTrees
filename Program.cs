@@ -19,6 +19,8 @@ namespace Treeees
                     .Or();
             var lambda = tester.Build();
 
+            Console.WriteLine(tester.rpnString);
+
             List<DataClass> objs = MakeSomeDataObjs();
 
             foreach (var item in objs)
