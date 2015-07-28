@@ -18,6 +18,17 @@ namespace Treeees
         private static readonly string EXPR_SEP = new string('\u00B6',1);
         private static readonly string NODE_SEP = new string('\u00A7', 1);
 
+        private List<Tuple<Tuple<string, object, object, Enum>, Enum>> _flat_tree;
+
+        public List<Tuple<Tuple<string, object, object, Enum>, Enum>> flatTree 
+        { 
+            get
+            {
+                //TODO create the flattened tree
+                return null;
+            }
+        }
+
         public PropTester()
         {
             thetype = typeof(T);
@@ -29,7 +40,7 @@ namespace Treeees
 
             estack = new Stack<Expression<Func<T, bool>>>();
             rpnString = "";
-            
+            _flat_tree = new List<Tuple<Tuple<string, object, object, Enum>, Enum>>();
         }
 
         public PropTester<T> Push(string name, Object val, comparison comp)
@@ -105,6 +116,7 @@ namespace Treeees
             }
         }
 
+        //TODO replace this with something that makes tuples, rather than writes strings
         private void write_expr(string name, string val, string comp)
         {
             var strings = new[] { name, val, comp };

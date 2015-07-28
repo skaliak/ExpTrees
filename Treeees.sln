@@ -5,6 +5,8 @@ VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExpTrees", "ExpTrees.csproj", "{9724BED5-FE20-437B-87BF-6127C7399DE0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExprTreesTests", "ExprTreesTests\ExprTreesTests.csproj", "{9F94ABC6-2642-4C70-B060-F8CD719A7EFC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{9724BED5-FE20-437B-87BF-6127C7399DE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9724BED5-FE20-437B-87BF-6127C7399DE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9724BED5-FE20-437B-87BF-6127C7399DE0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9F94ABC6-2642-4C70-B060-F8CD719A7EFC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F94ABC6-2642-4C70-B060-F8CD719A7EFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F94ABC6-2642-4C70-B060-F8CD719A7EFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F94ABC6-2642-4C70-B060-F8CD719A7EFC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
