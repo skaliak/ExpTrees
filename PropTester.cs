@@ -18,16 +18,9 @@ namespace Treeees
         private static readonly string EXPR_SEP = new string('\u00B6',1);
         private static readonly string NODE_SEP = new string('\u00A7', 1);
 
-        private List<Tuple<Tuple<string, object, object, Enum>, Enum>> _flat_tree;
-
-        public List<Tuple<Tuple<string, object, object, Enum>, Enum>> flatTree 
-        { 
-            get
-            {
-                //TODO create the flattened tree
-                return null;
-            }
-        }
+        List<Node> nodes;
+        List<SubTree> subtrees;
+        SubTree tree;
 
         public PropTester()
         {
@@ -39,44 +32,75 @@ namespace Treeees
             //predicate = PredicateBuilder.True<T>();
 
             estack = new Stack<Expression<Func<T, bool>>>();
-            rpnString = "";
-            _flat_tree = new List<Tuple<Tuple<string, object, object, Enum>, Enum>>();
+            //rpnString = "";
+
+            nodes = new List<Node>();
+            subtrees = new List<SubTree>();
+            tree = new SubTree();
         }
 
         public PropTester<T> Push(string name, Object val, comparison comp)
         {
-            //TODO check if type of val matches property type.  
-            //if it doesn't, but it's a string, try to parse it to the actual type. (separate method)
+            var prop = thetype.GetProperty(name);
+            var converted_val = Convert_val(prop, val);
 
-            var test_prop = Expression.Property(tparam, thetype.GetProperty(name));
-            var test_val = Expression.Constant(val);
+            var test_prop = Expression.Property(tparam, prop);
+            var test_val = Expression.Constant(converted_val);
             var expr = eFactory(comp, test_prop, test_val);
 
             //Console.WriteLine(expr);
-            write_expr(name, val.ToString(), Enum.GetName(typeof(comparison), comp));
+            //write_expr(name, val.ToString(), Enum.GetName(typeof(comparison), comp));
+
+            Build_tree(name, val, comp);
 
             estack.Push(expr);
 
             return this;
         }
 
+        private void Build_tree(string name, object val, comparison comp)
+        {
+            var node = new Node(name, comp, val);
+            nodes.Add(node);
+        }
+
+        private object Convert_val(PropertyInfo prop, object val)
+        {           
+            //check if type of val matches property type.  
+            //if it doesn't, but it's a string, try to parse it to the actual type.
+
+            var proptype = prop.PropertyType;
+            var valtype = val.GetType();
+            if (proptype != valtype && valtype == typeof(string))
+            {
+                val = Util.ParseString(val.ToString());
+            }
+
+            return val;
+        }
+
+        #region oldstuff
+
+        [Obsolete]
         public PropTester<T> Push(string name, string val, str_comparison comp)
         {
             var test_prop = Expression.Property(tparam, thetype.GetProperty(name));
             var test_val = Expression.Constant(val);
+
             string meth_name = Enum.GetName(typeof(str_comparison), comp);
             MethodInfo method = typeof(string).GetMethod(meth_name, new[] { typeof(string) });
             var method_expr = Expression.Call(test_prop, method, test_val);
             var expr = Expression.Lambda<Func<T, bool>>(method_expr, tparam);
 
             //Console.WriteLine(method_expr);
-            write_expr(name, val, meth_name);
+            //write_expr(name, val, meth_name);
 
             estack.Push(expr);
 
             return this;
         }
 
+        [Obsolete]
         private void Push(string encoded)
         {
             var elements = encoded.Split(EXPR_SEP[0]);
@@ -94,6 +118,7 @@ namespace Treeees
             }
         }
 
+        [Obsolete]
         private void decode_rpn(string rpn)
         {
             foreach (var expr_string in rpn.Split(NODE_SEP[0]))
@@ -117,12 +142,15 @@ namespace Treeees
         }
 
         //TODO replace this with something that makes tuples, rather than writes strings
+        [Obsolete]
         private void write_expr(string name, string val, string comp)
         {
             var strings = new[] { name, val, comp };
             var joined = string.Join(EXPR_SEP, strings) + NODE_SEP;
             rpnString += joined;
         }
+
+        #endregion
 
         public void And()
         {
@@ -134,7 +162,24 @@ namespace Treeees
             }
             estack.Push(pred);
 
-            rpnString += "&" + NODE_SEP;
+            //rpnString += "&" + NODE_SEP;
+            Build_tree(Operator.And);
+        }
+
+        private void Build_tree(Operator p)
+        {
+            if(nodes.Count > 0)
+            {
+                var subtree = new SubTree(p, nodes.ToArray());
+                subtrees.Add(subtree);
+                nodes.Clear();
+            }
+            else if (subtrees.Count > 0)
+            {
+                var subtree = new SubTree(p, subtrees.ToArray());
+                subtrees.Clear();
+                subtrees.Add(subtree);
+            }
         }
 
         public void Or()
@@ -147,32 +192,48 @@ namespace Treeees
             }
             estack.Push(pred);
 
-            rpnString += "|" + NODE_SEP;
+            //rpnString += "|" + NODE_SEP;
+            Build_tree(Operator.Or);
         }
 
         //TODO add negate operator
+        public void Not()
+        {
+            throw new NotImplementedException();
+        }
 
         private Expression<Func<T, bool>> eFactory(comparison comp, Expression left, Expression right)
         {
             Expression expr;
 
-            switch (comp)
+            if (comp < comparison.Contains)
             {
-                case comparison.Equals:
-                    expr = Expression.Equal(left, right);
-                    break;
-                case comparison.NotEquals:
-                    expr = Expression.NotEqual(left, right);
-                    break;
-                case comparison.Lt:
-                    expr = Expression.LessThan(left, right);
-                    break;
-                case comparison.Gt:
-                    expr = Expression.GreaterThan(left, right);
-                    break;
-                default:
-                    return null;
+                switch (comp)
+                {
+                    case comparison.Equals:
+                        expr = Expression.Equal(left, right);
+                        break;
+                    case comparison.NotEquals:
+                        expr = Expression.NotEqual(left, right);
+                        break;
+                    case comparison.Lt:
+                        expr = Expression.LessThan(left, right);
+                        break;
+                    case comparison.Gt:
+                        expr = Expression.GreaterThan(left, right);
+                        break;
+                    default:
+                        return null;
+                } 
             }
+            else
+            {
+                string meth_name = Enum.GetName(typeof(str_comparison), comp);
+                MethodInfo method = typeof(string).GetMethod(meth_name, new[] { typeof(string) });
+                var method_expr = Expression.Call(left, method, right);
+                expr = Expression.Lambda<Func<T, bool>>(method_expr, tparam);
+            }
+
             return Expression.Lambda<Func<T, bool>>(expr, tparam) as Expression<Func<T, bool>>;
         }
 
@@ -180,6 +241,9 @@ namespace Treeees
         {
             if (estack.Count != 1)
                 throw new InvalidOperationException(string.Format("not ready to build, {0} expressions on stack", estack.Count));
+
+            if (subtrees.Count == 1)
+                tree = subtrees[0];
 
             return estack.Pop().Compile();
         }
@@ -190,13 +254,24 @@ namespace Treeees
         Equals,
         NotEquals,
         Lt,
-        Gt
+        Gt,
+        Contains,
+        StartsWith,
+        EndsWith,
+        Between
     }
 
     public enum str_comparison
     {
         Contains,
         StartsWith,
-        EndsWith,
+        EndsWith
+    }
+
+    public enum Operator
+    {
+        And,
+        Or,
+        Not
     }
 }
