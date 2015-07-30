@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Treeees
 {
-    class SubTree
+    public class SubTree
     {
         public Node[] nodes { get; set; }
         public SubTree[] subtrees { get; set; }

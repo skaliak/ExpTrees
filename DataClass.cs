@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Treeees
 {
-    class DataClass
+    public class DataClass
     {
         public int id { get; set; }
 

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Treeees
 {
-    class Node
+    public class Node
     {
         public string prop { get; set; }
         public object[] values { get; set; }

@@ -60,6 +60,12 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ExpTrees.csproj">
+      <Project>{9724bed5-fe20-437b-87bf-6127c7399de0}</Project>
+      <Name>ExpTrees</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>

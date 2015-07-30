@@ -15,12 +15,14 @@ namespace Treeees
         private Expression<Func<T, bool>> predicate;
         private Stack<Expression<Func<T, bool>>> estack;
         public string rpnString { get; private set; }
-        private static readonly string EXPR_SEP = new string('\u00B6',1);
-        private static readonly string NODE_SEP = new string('\u00A7', 1);
+
+        private int stack_pointer;
+        private bool grow;
+        private Operation last_operation;
 
         List<Node> nodes;
         List<SubTree> subtrees;
-        SubTree tree;
+        public SubTree tree { get; private set; }
 
         public PropTester()
         {
@@ -29,40 +31,17 @@ namespace Treeees
             //the name is "p", only for debugging purposes
             tparam = Expression.Parameter(thetype, "p");
 
-            //predicate = PredicateBuilder.True<T>();
-
             estack = new Stack<Expression<Func<T, bool>>>();
-            //rpnString = "";
 
             nodes = new List<Node>();
             subtrees = new List<SubTree>();
             tree = new SubTree();
+            stack_pointer = 0;
+            grow = false;
+            last_operation = Operation.Grow;
         }
 
-        public PropTester<T> Push(string name, Object val, comparison comp)
-        {
-            var prop = thetype.GetProperty(name);
-            var converted_val = Convert_val(prop, val);
 
-            var test_prop = Expression.Property(tparam, prop);
-            var test_val = Expression.Constant(converted_val);
-            var expr = eFactory(comp, test_prop, test_val);
-
-            //Console.WriteLine(expr);
-            //write_expr(name, val.ToString(), Enum.GetName(typeof(comparison), comp));
-
-            Build_tree(name, val, comp);
-
-            estack.Push(expr);
-
-            return this;
-        }
-
-        private void Build_tree(string name, object val, comparison comp)
-        {
-            var node = new Node(name, comp, val);
-            nodes.Add(node);
-        }
 
         private object Convert_val(PropertyInfo prop, object val)
         {           
@@ -79,121 +58,65 @@ namespace Treeees
             return val;
         }
 
-        #region oldstuff
-
-        [Obsolete]
-        public PropTester<T> Push(string name, string val, str_comparison comp)
+        public PropTester<T> Push(string name, Object val, comparison comp)
         {
-            var test_prop = Expression.Property(tparam, thetype.GetProperty(name));
-            var test_val = Expression.Constant(val);
+            last_operation = Operation.Push;
+            var prop = thetype.GetProperty(name);
+            var converted_val = Convert_val(prop, val);
 
-            string meth_name = Enum.GetName(typeof(str_comparison), comp);
-            MethodInfo method = typeof(string).GetMethod(meth_name, new[] { typeof(string) });
-            var method_expr = Expression.Call(test_prop, method, test_val);
-            var expr = Expression.Lambda<Func<T, bool>>(method_expr, tparam);
+            var test_prop = Expression.Property(tparam, prop);
+            var test_val = Expression.Constant(converted_val);
+            var expr = eFactory(comp, test_prop, test_val);
 
-            //Console.WriteLine(method_expr);
-            //write_expr(name, val, meth_name);
+            Build_tree(name, val, comp);
 
             estack.Push(expr);
 
             return this;
         }
 
-        [Obsolete]
-        private void Push(string encoded)
-        {
-            var elements = encoded.Split(EXPR_SEP[0]);
-            if (elements.Count() == 3)
-            {
-                comparison comp;
-                if(Enum.TryParse(elements[2], out comp))
-                    Push(elements[0], elements[1], comp);
-                else
-                {
-                    str_comparison scomp;
-                    if (Enum.TryParse(elements[2], out scomp))
-                        Push(elements[0], elements[1], comp);
-                }
-            }
-        }
-
-        [Obsolete]
-        private void decode_rpn(string rpn)
-        {
-            foreach (var expr_string in rpn.Split(NODE_SEP[0]))
-            {
-                if(! string.IsNullOrEmpty(expr_string))
-                {
-                    switch (expr_string)
-                    {
-                        case "&":
-                            And();
-                            break;
-                        case "|":
-                            Or();
-                            break;
-                        default:
-                            Push(expr_string);
-                            break;
-                    }
-                }
-            }
-        }
-
-        //TODO replace this with something that makes tuples, rather than writes strings
-        [Obsolete]
-        private void write_expr(string name, string val, string comp)
-        {
-            var strings = new[] { name, val, comp };
-            var joined = string.Join(EXPR_SEP, strings) + NODE_SEP;
-            rpnString += joined;
-        }
-
-        #endregion
-
         public void And()
         {
-            var pred = PredicateBuilder.True<T>();
-            while(estack.Count > 0)
-            {
-                var expr = estack.Pop();
-                pred = pred.And<T>(expr);
-            }
-            estack.Push(pred);
-
-            //rpnString += "&" + NODE_SEP;
-            Build_tree(Operator.And);
-        }
-
-        private void Build_tree(Operator p)
-        {
-            if(nodes.Count > 0)
-            {
-                var subtree = new SubTree(p, nodes.ToArray());
-                subtrees.Add(subtree);
-                nodes.Clear();
-            }
-            else if (subtrees.Count > 0)
-            {
-                var subtree = new SubTree(p, subtrees.ToArray());
-                subtrees.Clear();
-                subtrees.Add(subtree);
-            }
+            Apply_Op(Operator.And);
         }
 
         public void Or()
         {
+            Apply_Op(Operator.Or);
+        }
+
+        private void Apply_Op(Operator op)
+        {
+            if (last_operation == Operation.Grow)
+                return;
+
+            if (last_operation == Operation.Apply_Operator)
+            {
+                stack_pointer = 0;
+                last_operation = Operation.Grow;
+            }
+
             var pred = PredicateBuilder.False<T>();
-            while (estack.Count > 0)
+
+            if(op == Operator.And)
+                pred = PredicateBuilder.True<T>();
+            
+            while (estack.Count > stack_pointer)
             {
                 var expr = estack.Pop();
-                pred = pred.Or<T>(expr);
+                if(op == Operator.And)
+                    pred = pred.And<T>(expr);
+                else if (op == Operator.Or)
+                    pred = pred.Or<T>(expr);
             }
             estack.Push(pred);
 
-            //rpnString += "|" + NODE_SEP;
-            Build_tree(Operator.Or);
+            Build_tree(op);
+            grow = true;
+            if (last_operation == Operation.Grow)
+                stack_pointer++;
+            else
+                stack_pointer = 1;
         }
 
         //TODO add negate operator
@@ -237,6 +160,28 @@ namespace Treeees
             return Expression.Lambda<Func<T, bool>>(expr, tparam) as Expression<Func<T, bool>>;
         }
 
+        private void Build_tree(string name, object val, comparison comp)
+        {
+            var node = new Node(name, comp, val);
+            nodes.Add(node);
+        }
+
+        private void Build_tree(Operator p)
+        {
+            if (nodes.Count > 0)
+            {
+                var subtree = new SubTree(p, nodes.ToArray());
+                subtrees.Add(subtree);
+                nodes.Clear();
+            }
+            else if (subtrees.Count > 0)
+            {
+                var subtree = new SubTree(p, subtrees.ToArray());
+                subtrees.Clear();
+                subtrees.Add(subtree);
+            }
+        }
+
         public Func<T, bool> Build()
         {
             if (estack.Count != 1)
@@ -258,7 +203,7 @@ namespace Treeees
         Contains,
         StartsWith,
         EndsWith,
-        Between
+        //Between  //TODO add between operator
     }
 
     public enum str_comparison
@@ -273,5 +218,12 @@ namespace Treeees
         And,
         Or,
         Not
+    }
+
+    enum Operation
+    {
+        Grow,
+        Push,
+        Apply_Operator
     }
 }
