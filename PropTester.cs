@@ -75,26 +75,28 @@ namespace Treeees
             return this;
         }
 
-        public void And()
+        public PropTester<T> And()
         {
-            Apply_Op(Operator.And);
+            return Apply_Op(Operator.And);
         }
 
-        public void Or()
+        public PropTester<T> Or()
         {
-            Apply_Op(Operator.Or);
+            return Apply_Op(Operator.Or);
         }
 
-        private void Apply_Op(Operator op)
+        private PropTester<T> Apply_Op(Operator op)
         {
             if (last_operation == Operation.Grow)
-                return;
+                return this;
 
             if (last_operation == Operation.Apply_Operator)
             {
                 stack_pointer = 0;
                 last_operation = Operation.Grow;
             }
+            else
+                last_operation = Operation.Apply_Operator;
 
             var pred = PredicateBuilder.False<T>();
 
@@ -117,6 +119,8 @@ namespace Treeees
                 stack_pointer++;
             else
                 stack_pointer = 1;
+
+            return this;
         }
 
         //TODO add negate operator

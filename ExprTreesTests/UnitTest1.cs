@@ -52,7 +52,7 @@ namespace ExprTreesTests
         }
 
         [TestMethod]
-        public void TestTesterSerialization()
+        public void TestTesterSerialization1()
         {
             var tester = new PropTester<DataClass>();
 
@@ -62,8 +62,34 @@ namespace ExprTreesTests
             var lambda = tester.Build();
 
             var json = JsonConvert.SerializeObject(tester.tree);
-
             Assert.IsNotNull(json);
+
+            var tree = JsonConvert.DeserializeObject<SubTree>(json);
+            Assert.IsNotNull(tree);
+            
+            Console.WriteLine(json);
+        }
+
+        [TestMethod]
+        public void TestTesterSerialization2()
+        {
+            var tester = new PropTester<DataClass>();
+
+            tester.Push("name", "steve", comparison.Equals)
+                .Push("name", "jeff", comparison.Equals)
+                .And()
+                .Push("name", "foo", comparison.Equals)
+                .Push("name", "bar", comparison.Equals)
+                .And()
+                .Or();
+            var lambda = tester.Build();
+
+            var json = JsonConvert.SerializeObject(tester.tree);
+            Assert.IsNotNull(json);
+
+            var tree = JsonConvert.DeserializeObject<SubTree>(json);
+            Assert.IsNotNull(tree);
+
             Console.WriteLine(json);
         }
 

@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExpTrees", "ExpTrees.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExprTreesTests", "ExprTreesTests\ExprTreesTests.csproj", "{9F94ABC6-2642-4C70-B060-F8CD719A7EFC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UI", "..\UI\UI.csproj", "{2576C41B-DE58-4BA8-8C78-C2D34E88C013}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{9F94ABC6-2642-4C70-B060-F8CD719A7EFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9F94ABC6-2642-4C70-B060-F8CD719A7EFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9F94ABC6-2642-4C70-B060-F8CD719A7EFC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2576C41B-DE58-4BA8-8C78-C2D34E88C013}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2576C41B-DE58-4BA8-8C78-C2D34E88C013}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2576C41B-DE58-4BA8-8C78-C2D34E88C013}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2576C41B-DE58-4BA8-8C78-C2D34E88C013}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
