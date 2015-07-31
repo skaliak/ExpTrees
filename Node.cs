@@ -8,15 +8,38 @@ namespace Treeees
 {
     public class Node
     {
-        public string prop { get; set; }
-        public object[] values { get; set; }
-        public comparison comp { get; set; }
+        [Obsolete]
+        public Leaf[] leaves { get; set; }
+        public Node[] nodes { get; set; }
+        public NodeData data { get; private set; }
+        public Operator? op { get; set; }
 
-        public Node(string property_name, comparison c, params object[] values)
+        [Obsolete]
+        public Node(Operator op, params Leaf[] leaves)
         {
-            prop = property_name;
-            this.values = values;
-            comp = c;
+            this.leaves = leaves;
+            this.op = op;
+        }
+
+        public Node(string prop_name, object val, comparison c)
+        {
+            data = new NodeData()
+            {
+                value = val,
+                prop = prop_name,
+                comp = c
+            };
+        }
+
+        public Node(Operator op, params Node[] nodes)
+        {
+            this.nodes = nodes;
+            this.op = op;
+        }
+
+        public Node()
+        {
+            // TODO: Complete member initialization
         }
     }
 }

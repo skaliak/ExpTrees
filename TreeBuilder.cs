@@ -5,26 +5,30 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Linq.Expressions;
 using System.Reflection;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Treeees
 {
-    public class PropTester<T>
+    public class TreeBuilder<T>
     {
         private Type thetype;
         private ParameterExpression tparam;
-        private Expression<Func<T, bool>> predicate;
+        //private Expression<Func<T, bool>> predicate;
         private Stack<Expression<Func<T, bool>>> estack;
         public string rpnString { get; private set; }
 
         private int stack_pointer;
-        private bool grow;
+        //private bool grow;
         private Operation last_operation;
 
+        [Obsolete]
+        List<Leaf> leaves;
         List<Node> nodes;
-        List<SubTree> subtrees;
-        public SubTree tree { get; private set; }
+        List<Node> data_nodes;
+        public Node tree { get; private set; }
 
-        public PropTester()
+        public TreeBuilder()
         {
             thetype = typeof(T);
 
@@ -33,11 +37,14 @@ namespace Treeees
 
             estack = new Stack<Expression<Func<T, bool>>>();
 
+            leaves = new List<Leaf>();
             nodes = new List<Node>();
-            subtrees = new List<SubTree>();
-            tree = new SubTree();
+
+            data_nodes = new List<Node>();
+
+            tree = new Node();
             stack_pointer = 0;
-            grow = false;
+            //grow = false;
             last_operation = Operation.Grow;
         }
 
@@ -58,7 +65,7 @@ namespace Treeees
             return val;
         }
 
-        public PropTester<T> Push(string name, Object val, comparison comp)
+        public TreeBuilder<T> Push(string name, Object val, comparison comp)
         {
             last_operation = Operation.Push;
             var prop = thetype.GetProperty(name);
@@ -75,17 +82,17 @@ namespace Treeees
             return this;
         }
 
-        public PropTester<T> And()
+        public TreeBuilder<T> And()
         {
             return Apply_Op(Operator.And);
         }
 
-        public PropTester<T> Or()
+        public TreeBuilder<T> Or()
         {
             return Apply_Op(Operator.Or);
         }
 
-        private PropTester<T> Apply_Op(Operator op)
+        private TreeBuilder<T> Apply_Op(Operator op)
         {
             if (last_operation == Operation.Grow)
                 return this;
@@ -114,7 +121,7 @@ namespace Treeees
             estack.Push(pred);
 
             Build_tree(op);
-            grow = true;
+            //grow = true;
             if (last_operation == Operation.Grow)
                 stack_pointer++;
             else
@@ -123,10 +130,17 @@ namespace Treeees
             return this;
         }
 
-        //TODO add negate operator
-        public void Not()
+        public TreeBuilder<T> Not()
         {
-            throw new NotImplementedException();
+            //are there any other operations that this can follow?
+            if (last_operation == Operation.Push)
+            {
+                var negated = Expression.Negate(estack.Pop());
+                var expr = Expression.Lambda<Func<T, bool>>(negated, tparam);
+                estack.Push(expr);
+            }
+
+            return this;
         }
 
         private Expression<Func<T, bool>> eFactory(comparison comp, Expression left, Expression right)
@@ -166,23 +180,26 @@ namespace Treeees
 
         private void Build_tree(string name, object val, comparison comp)
         {
-            var node = new Node(name, comp, val);
-            nodes.Add(node);
+            //var node = new Leaf(name, comp, val);
+            //leaves.Add(node);
+            var actual_node = new Node(name, val, comp);
+            data_nodes.Add(actual_node);
         }
 
+        //TODO, rework this to make it more tree-like (sorry ¯\_(ツ)_/¯ )
         private void Build_tree(Operator p)
         {
-            if (nodes.Count > 0)
+            if (data_nodes.Count > 0)
             {
-                var subtree = new SubTree(p, nodes.ToArray());
-                subtrees.Add(subtree);
-                nodes.Clear();
+                var subtree = new Node(p, data_nodes.ToArray());
+                data_nodes.Clear();
+                nodes.Add(subtree);
             }
-            else if (subtrees.Count > 0)
+            else if (nodes.Count > 0)
             {
-                var subtree = new SubTree(p, subtrees.ToArray());
-                subtrees.Clear();
-                subtrees.Add(subtree);
+                var subtree = new Node(p, nodes.ToArray());
+                nodes.Clear();
+                nodes.Add(subtree);
             }
         }
 
@@ -191,13 +208,14 @@ namespace Treeees
             if (estack.Count != 1)
                 throw new InvalidOperationException(string.Format("not ready to build, {0} expressions on stack", estack.Count));
 
-            if (subtrees.Count == 1)
-                tree = subtrees[0];
+            if (nodes.Count == 1)
+                tree = nodes[0];
 
             return estack.Pop().Compile();
         }
     }
 
+    [JsonConverter(typeof(StringEnumConverter))]
     public enum comparison
     {
         Equals,
@@ -217,6 +235,7 @@ namespace Treeees
         EndsWith
     }
 
+    [JsonConverter(typeof(StringEnumConverter))]
     public enum Operator
     {
         And,

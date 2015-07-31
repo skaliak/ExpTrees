@@ -9,12 +9,12 @@ namespace Treeees
 {
     public class Serializer<T>
     {
-        public string Serialize(PropTester<T> obj)
+        public string Serialize(TreeBuilder<T> obj)
         {
             throw new NotImplementedException();
         }
 
-        public PropTester<T> Deserialize(string json)
+        public TreeBuilder<T> Deserialize(string json)
         {
             throw new NotImplementedException();
         }

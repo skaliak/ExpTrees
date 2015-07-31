@@ -28,7 +28,7 @@ namespace ExprTreesTests
         [TestMethod]
         public void TestPropTesterBasic()
         {
-            var tester = new PropTester<DataClass>();
+            var tester = new TreeBuilder<DataClass>();
             var matched = new List<string>();
             var not_matched = new List<string>();
             var should_matched = new List<string> { "steve", "jeff" };
@@ -54,7 +54,7 @@ namespace ExprTreesTests
         [TestMethod]
         public void TestTesterSerialization1()
         {
-            var tester = new PropTester<DataClass>();
+            var tester = new TreeBuilder<DataClass>();
 
             tester.Push("name", "steve", comparison.Equals)
                 .Push("name", "jeff", comparison.Equals)
@@ -64,7 +64,7 @@ namespace ExprTreesTests
             var json = JsonConvert.SerializeObject(tester.tree);
             Assert.IsNotNull(json);
 
-            var tree = JsonConvert.DeserializeObject<SubTree>(json);
+            var tree = JsonConvert.DeserializeObject<Node>(json);
             Assert.IsNotNull(tree);
             
             Console.WriteLine(json);
@@ -73,7 +73,7 @@ namespace ExprTreesTests
         [TestMethod]
         public void TestTesterSerialization2()
         {
-            var tester = new PropTester<DataClass>();
+            var tester = new TreeBuilder<DataClass>();
 
             tester.Push("name", "steve", comparison.Equals)
                 .Push("name", "jeff", comparison.Equals)
@@ -87,7 +87,7 @@ namespace ExprTreesTests
             var json = JsonConvert.SerializeObject(tester.tree);
             Assert.IsNotNull(json);
 
-            var tree = JsonConvert.DeserializeObject<SubTree>(json);
+            var tree = JsonConvert.DeserializeObject<Node>(json);
             Assert.IsNotNull(tree);
 
             Console.WriteLine(json);

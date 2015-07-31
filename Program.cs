@@ -9,10 +9,13 @@ namespace Treeees
 {
     class Program
     {
+
+        //DO NOT USE -- use unit tests instead
+
         static void Main(string[] args)
         {
             //var lambda = GetPropTester<DataClass>("name", "steve");
-            var tester = new PropTester<DataClass>();
+            var tester = new TreeBuilder<DataClass>();
 
             tester.Push("name", "steve", comparison.Equals)
                    .Push("name", "jeff", comparison.Equals)
