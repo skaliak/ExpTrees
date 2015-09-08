@@ -134,6 +134,37 @@ namespace ObjectMatcher
             return estack.Pop().Compile();
         }
 
+        public static TreeBuilder<T> Restore(Node tree)
+        {
+            return Restore(tree, new TreeBuilder<T>());
+        }
+
+        private static TreeBuilder<T> Restore(Node tree, TreeBuilder<T> tb)
+        {
+            if (tree.nodes != null)
+            {
+                foreach (var node in tree.nodes)
+                {
+                    Restore(node, tb);
+                } 
+            }
+ 
+            tb.Push(tree.data);
+            if (tree.op != null)
+            {
+                var op = (Operator)tree.op;
+                tb.Apply_Op(op);
+            }
+
+            return tb;
+        }
+
+        private void Push(NodeData nodeData)
+        {
+            if(nodeData != null)
+                Push(nodeData.prop, nodeData.value, nodeData.comp);
+        }
+
         private TreeBuilder<T> Apply_Op(Operator op)
         {
             if (last_operation == Operation.Grow)

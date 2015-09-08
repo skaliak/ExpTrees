@@ -9,7 +9,7 @@ namespace ObjectMatcher
     public class Node
     {
         public Node[] nodes { get; set; }
-        public NodeData data { get; private set; }
+        public NodeData data { get; set; }
         public Operator? op { get; set; }
 
         public Node(string prop_name, object val, comparison c)

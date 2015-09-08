@@ -59,7 +59,7 @@ namespace ExprTreesTests
             tester.Push("name", "steve", comparison.Equals)
                 .Push("name", "jeff", comparison.Equals)
                 .Or();
-            //var lambda = tester.Build();
+            var lambda = tester.Build();
 
             var json = JsonConvert.SerializeObject(tester.tree);
             Assert.IsNotNull(json);
@@ -82,7 +82,7 @@ namespace ExprTreesTests
                 .Push("name", "bar", comparison.Equals)
                 .And()
                 .Or();
-            //var lambda = tester.Build();
+            var lambda = tester.Build();
 
             var json = JsonConvert.SerializeObject(tester.tree);
             Assert.IsNotNull(json);
@@ -91,6 +91,27 @@ namespace ExprTreesTests
             Assert.IsNotNull(tree);
 
             Console.WriteLine(json);
+        }
+
+        [TestMethod]
+        public void TestRestore()
+        {
+            var json_string = "{\"nodes\":[{\"nodes\":null,\"data\":{\"prop\":\"name\",\"value\":\"steve\",\"comp\":\"Equals\"},\"op\":null},{\"nodes\":null,\"data\":{\"prop\":\"name\",\"value\":\"jeff\",\"comp\":\"Equals\"},\"op\":null}],\"data\":null,\"op\":\"Or\"}";
+            var tree = JsonConvert.DeserializeObject<Node>(json_string);
+
+            var tb = TreeBuilder<DataClass>.Restore(tree);
+            Assert.IsNotNull(tb);
+
+            var lambda = tb.Build();
+
+            int count = 0;
+            foreach (var test_obj in MakeSomeDataObjs())
+            {
+                if (lambda(test_obj))
+                    count++;
+            }
+
+            Assert.AreEqual(2, count);
         }
 
         private IEnumerable<DataClass> MakeSomeDataObjs()
