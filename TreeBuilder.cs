@@ -8,22 +8,37 @@ using System.Reflection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace Treeees
+namespace ObjectMatcher
 {
+    /// <summary>
+    /// Class for generating an expression tree with builder syntax
+    /// </summary>
+    /// <example>
+    /// This example generates an expression tree that will match an object whose "name" property is "steve" OR "jeff"
+    /// <code>
+    ///    var tester = new TreeBuilder&lt;DataClass&gt;();
+    ///    tester.Push("name", "steve", comparison.Equals)
+    ///           .Push("name", "jeff", comparison.Equals)
+    ///            .Or();
+    ///    var lambda = tester.Build();
+    /// 
+    /// </code>
+    /// </example>
+    /// <remarks>
+    /// This class can be serialized to json via the tree property
+    /// 
+    /// PL 9/8/15
+    /// </remarks>
     public class TreeBuilder<T>
     {
         private Type thetype;
         private ParameterExpression tparam;
-        //private Expression<Func<T, bool>> predicate;
-        private Stack<Expression<Func<T, bool>>> estack;
-        public string rpnString { get; private set; }
 
+        private Stack<Expression<Func<T, bool>>> estack;
         private int stack_pointer;
-        //private bool grow;
+
         private Operation last_operation;
 
-        [Obsolete]
-        List<Leaf> leaves;
         List<Node> nodes;
         List<Node> data_nodes;
         public Node tree { get; private set; }
@@ -37,34 +52,22 @@ namespace Treeees
 
             estack = new Stack<Expression<Func<T, bool>>>();
 
-            leaves = new List<Leaf>();
             nodes = new List<Node>();
-
             data_nodes = new List<Node>();
 
             tree = new Node();
             stack_pointer = 0;
-            //grow = false;
+
             last_operation = Operation.Grow;
         }
 
 
-
-        private object Convert_val(PropertyInfo prop, object val)
-        {           
-            //check if type of val matches property type.  
-            //if it doesn't, but it's a string, try to parse it to the actual type.
-
-            var proptype = prop.PropertyType;
-            var valtype = val.GetType();
-            if (proptype != valtype && valtype == typeof(string))
-            {
-                val = Util.ParseString(val.ToString());
-            }
-
-            return val;
-        }
-
+        /// <summary>
+        /// Add an expression to the tree
+        /// </summary>
+        /// <param name="name">the property name</param>
+        /// <param name="val">the value to test against</param>
+        /// <param name="comp">the comparison type</param>
         public TreeBuilder<T> Push(string name, Object val, comparison comp)
         {
             last_operation = Operation.Push;
@@ -82,14 +85,53 @@ namespace Treeees
             return this;
         }
 
+        /// <summary>
+        /// join all the previously added nodes (expressions) with an AND operator
+        /// </summary>
         public TreeBuilder<T> And()
         {
             return Apply_Op(Operator.And);
         }
 
+        /// <summary>
+        /// join all the previously added nodes (expressions) with an OR operator
+        /// </summary>
         public TreeBuilder<T> Or()
         {
             return Apply_Op(Operator.Or);
+        }
+
+
+
+        /// <summary>
+        /// negate the most recently added expression
+        /// </summary>
+        public TreeBuilder<T> Not()
+        {
+            //are there any other operations that this can follow?
+            if (last_operation == Operation.Push)
+            {
+                var negated = Expression.Negate(estack.Pop());
+                var expr = Expression.Lambda<Func<T, bool>>(negated, tparam);
+                estack.Push(expr);
+            }
+
+            return this;
+        }
+
+        /// <summary>
+        /// compile the expression tree into a lambda that returns a bool indicating if the
+        /// <para>supplied object matches</para>
+        /// </summary>
+        public Func<T, bool> Build()
+        {
+            if (estack.Count != 1)
+                throw new InvalidOperationException(string.Format("not ready to build, {0} expressions on stack", estack.Count));
+
+            if (nodes.Count == 1)
+                tree = nodes[0];
+
+            return estack.Pop().Compile();
         }
 
         private TreeBuilder<T> Apply_Op(Operator op)
@@ -121,7 +163,7 @@ namespace Treeees
             estack.Push(pred);
 
             Build_tree(op);
-            //grow = true;
+
             if (last_operation == Operation.Grow)
                 stack_pointer++;
             else
@@ -130,19 +172,23 @@ namespace Treeees
             return this;
         }
 
-        public TreeBuilder<T> Not()
-        {
-            //are there any other operations that this can follow?
-            if (last_operation == Operation.Push)
+        private object Convert_val(PropertyInfo prop, object val)
+        {           
+            //check if type of val matches property type.  
+            //if it doesn't, but it's a string, try to parse it to the actual type.
+
+            var proptype = prop.PropertyType;
+            var valtype = val.GetType();
+            if (proptype != valtype && valtype == typeof(string))
             {
-                var negated = Expression.Negate(estack.Pop());
-                var expr = Expression.Lambda<Func<T, bool>>(negated, tparam);
-                estack.Push(expr);
+                val = Util.ParseString(val.ToString());
             }
 
-            return this;
+            return val;
         }
 
+        /// <summary>
+        /// Generate the proper expression based on the two input expressions and the comparison type</summary>
         private Expression<Func<T, bool>> eFactory(comparison comp, Expression left, Expression right)
         {
             Expression expr;
@@ -180,8 +226,6 @@ namespace Treeees
 
         private void Build_tree(string name, object val, comparison comp)
         {
-            //var node = new Leaf(name, comp, val);
-            //leaves.Add(node);
             var actual_node = new Node(name, val, comp);
             data_nodes.Add(actual_node);
         }
@@ -203,16 +247,6 @@ namespace Treeees
             }
         }
 
-        public Func<T, bool> Build()
-        {
-            if (estack.Count != 1)
-                throw new InvalidOperationException(string.Format("not ready to build, {0} expressions on stack", estack.Count));
-
-            if (nodes.Count == 1)
-                tree = nodes[0];
-
-            return estack.Pop().Compile();
-        }
     }
 
     [JsonConverter(typeof(StringEnumConverter))]
@@ -224,8 +258,7 @@ namespace Treeees
         Gt,
         Contains,
         StartsWith,
-        EndsWith,
-        //Between  //TODO add between operator
+        EndsWith
     }
 
     public enum str_comparison

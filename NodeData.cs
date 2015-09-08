@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Treeees
+namespace ObjectMatcher
 {
-    class NodeData
+    public class NodeData
     {
         public string prop { get; set; }
         public object value { get; set; }

@@ -4,22 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Treeees
+namespace ObjectMatcher
 {
     public class Node
     {
-        [Obsolete]
-        public Leaf[] leaves { get; set; }
         public Node[] nodes { get; set; }
         public NodeData data { get; private set; }
         public Operator? op { get; set; }
-
-        [Obsolete]
-        public Node(Operator op, params Leaf[] leaves)
-        {
-            this.leaves = leaves;
-            this.op = op;
-        }
 
         public Node(string prop_name, object val, comparison c)
         {
@@ -39,7 +30,7 @@ namespace Treeees
 
         public Node()
         {
-            // TODO: Complete member initialization
+
         }
     }
 }

@@ -2,7 +2,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 using Newtonsoft.Json;
-using Treeees;
+using ObjectMatcher;
 using System.Linq;
 
 namespace ExprTreesTests
@@ -28,12 +28,12 @@ namespace ExprTreesTests
         [TestMethod]
         public void TestPropTesterBasic()
         {
-            var tester = new TreeBuilder<DataClass>();
             var matched = new List<string>();
             var not_matched = new List<string>();
             var should_matched = new List<string> { "steve", "jeff" };
             var should_not_matched = new List<string> { "jimbo", "george" };
 
+            var tester = new TreeBuilder<DataClass>();
             tester.Push("name", "steve", comparison.Equals)
                    .Push("name", "jeff", comparison.Equals)
                     .Or();
@@ -59,7 +59,7 @@ namespace ExprTreesTests
             tester.Push("name", "steve", comparison.Equals)
                 .Push("name", "jeff", comparison.Equals)
                 .Or();
-            var lambda = tester.Build();
+            //var lambda = tester.Build();
 
             var json = JsonConvert.SerializeObject(tester.tree);
             Assert.IsNotNull(json);
@@ -82,7 +82,7 @@ namespace ExprTreesTests
                 .Push("name", "bar", comparison.Equals)
                 .And()
                 .Or();
-            var lambda = tester.Build();
+            //var lambda = tester.Build();
 
             var json = JsonConvert.SerializeObject(tester.tree);
             Assert.IsNotNull(json);

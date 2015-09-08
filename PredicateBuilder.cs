@@ -4,8 +4,9 @@ using System.Linq;
 using System.Linq.Expressions;
 
 
-namespace Treeees
+namespace ObjectMatcher
 {
+    // http://www.albahari.com/nutshell/predicatebuilder.aspx
     public static class PredicateBuilder
     {
         public static Expression<Func<T, bool>> True<T>() { return f => true; }

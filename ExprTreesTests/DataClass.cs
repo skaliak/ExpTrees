@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Treeees
+namespace ExprTreesTests
 {
     public class DataClass
     {
@@ -20,7 +20,7 @@ namespace Treeees
             this.name = name;
         }
 
-        public string ToString()
+        public override string ToString()
         {
             return string.Format("{0} : {1}", id, name);
         }
